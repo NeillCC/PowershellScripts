@@ -1,0 +1,32 @@
+##This scripts needs Powershell 6 AKA Powershell Core due to the flags required in Invoke-RestMethod. -SSLProtocal wasn't added until 6.0
+#LogPath needs a trailing backslash
+$LogPath = 'c:\logs\'
+#Create the log path if it doesn't exist
+if(!(test-path $LogPath)){New-Item -Path $LogPath -ItemType Directory -Force}
+#Remove logs older than one month
+Get-ChildItem $LogPath -filter {creationtime -gt (Get-Date).AddMonths(1)} | Remove-Item -Force
+#Start logging
+Start-Transcript -Path "$LogPath$(get-date -Format 'yyyy-MM-dd HH-mm').txt" -Append
+##Declare your variables
+[string]$ZoneID = 'REDACTED'
+[string]$RecordID = 'REDACTED'
+[string]$URI = "https://api.cloudflare.com/client/v4/zones/$ZoneID/dns_records/$RecordID"
+[string]$FQDN = 'example.domain.tld'
+[hashtable] $Headers = @{
+    'X-Auth-Email'='yourCloudflareEmail@domain.tld'
+    'X-Auth-Key'='REDACTED'
+}
+#Get current ip
+$IP = Invoke-WebRequest -Uri 'https://api.ipify.org' | Select-Object -ExpandProperty content
+#form body of REST Request
+$Body = @{
+    'type'='A';
+    'content'=$ip;
+    'name'=$FQDN;
+    'proxied'=$false;
+    'ttl'='120';
+} | ConvertTo-Json
+#Perform REST request
+Invoke-RestMethod -SslProtocol Tls12 -Uri $URI -Method Put -Headers $Headers -Body $Body
+
+Stop-Transcript
