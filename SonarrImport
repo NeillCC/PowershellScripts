@@ -1,0 +1,28 @@
+#User defined variables
+#Sonarr API key for authentication. Found under Settings->General->API.
+$ApiKey = '6b65e783482d4af8ba97bb2b54d3e46b'
+#Sonarr IP
+$IpAddr = '10.0.2.57'
+#Sonarr port. Default is 8989
+$Port = '8989'
+ 
+#Move all video and subtitle files to the root of /mountpointsmedia/tmp/ to dix Sonarr not reading paths correctly.
+Get-ChildItem /mountpoints/media/tmp/* -File -Recurse -Depth 1 |Where-Object {$_.extension -eq '.mp4' -or $_.extension -eq '.mkv' -or $_.extension -eq '.wmv' -or $_.extension -eq '.sub' -or $_.extension -eq '.srt' -or $_.extension -eq '.sbv'}|ForEach-Object{Move-Item -LiteralPath $_.FullName -Destination '/mountpoints/media/tmp/'}
+#VARIABLE Tell Sonarr where to pull files from for importing
+$Path = get-childitem -file -path '/mountpoints/media/tmp/'| select-object -expandproperty fullname
+#Forming the connection string to access Sonarr
+$URL='http://'+$IpAddr+':'+$Port+'/api/command?apikey='+$ApiKey
+ 
+#Senindg Sonarr the commands
+foreach($i in $path){
+$JSON = @{
+'sendUpdatesToClient'='true';
+'sendUpdates'='true';
+#This is the command being performed
+'name'='DownloadedEpisodesScan';
+#Path to scan
+'path'="$i";
+#I don't want to leave the files behind, so I set this to move. Copy and auto are also accepted.
+'importmode'='Move'}|ConvertTo-Json
+ 
+Invoke-RestMethod -Uri $URL -Method Post -Body $JSON}
