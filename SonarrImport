@@ -1,3 +1,4 @@
+##Designed for PSCore
 #User defined variables
 #Sonarr API key for authentication. Found under Settings->General->API.
 $ApiKey = '6b65e783482d4af8ba97bb2b54d3e46b'
