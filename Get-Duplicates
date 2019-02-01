@@ -1,0 +1,27 @@
+function Get-Duplicates {
+    #Finds and lists duplicates in an array
+    #Declares a required parameter that is searched for duplicates
+    Param([parameter(Mandatory=$true,position=0)] [string[]] $InputObject)
+    #Declares a blank varaiable in the script scope to hold previously searched strings. Without this an instance of each duplicate is returned instead of just one entry per duplicate
+    [string[]] $Script:PreviouslySearched = ''
+    #Declares a blank object to hold any duplicates found and is returned at the end of the script
+    $Result = @()
+        #Cycle through all objects in $InputObject
+        foreach($i in $InputObject){
+            #if the current string has not already been found to be a duplicate, send it to Select-String and add it to to $Previouslysearched so known duplicates aren't searched multiple times
+            if($PreviouslySearched -notcontains $i){
+                $TempResult = $InputObject | Select-String -Pattern $('(?<=^)'+$i+'(?=$)') -AllMatches
+                $PreviouslySearched += $i
+            }
+            #If more than 1 of the current string is found, store information in $Result
+            if($TempResult.count -gt 1){
+                $Result += New-Object -TypeName psobject -Property @{
+                    'SearchTerm'="$i";
+                    'TotalCount'="$($TempResult.count)";
+                    'FoundOnLines'="$($TempResult | Select-Object -ExpandProperty linenumber)"
+                }
+            }
+        }
+    #Return any duplicates
+    return $Result
+}
