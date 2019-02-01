@@ -1,0 +1,36 @@
+function Get-Office365Downtime {
+    #Define an array into which we can drop all the results
+    $ReturnObject = @()
+    #Pull Page from istheservicedown.com
+    [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
+    if (!$WebRequest) { $WebRequest=(Invoke-WebRequest "https://istheservicedown.com/status/office-365/history") }
+    #Select only the part of the html we want
+    $webContent = $WebRequest.ParsedHtml.getElementsByTagName("TABLE")|Select-Object -ExpandProperty outerhtml
+    #Get rid of a bunch of irrelevant HTML tags and extra lines
+    $webContent = $webContent -split '<TR>'
+    $webContent = $webContent -replace('<TD>|</TD>|</TR>','')
+    $webContent = $webContent -replace('</TBODY></TABLE>','') | Select-Object -skip 2
+    $webContent = $webContent.trim('')
+    #Use the gathered info and turn it into PS objects
+    foreach($i in $webContent ){
+        #Split on each new line to spearte into speerate objects
+        $i = $i -split '\r'
+        #Get rid of any blank lines
+        $i = $i.trim('')
+        #Split the Duration into three parts (H:M:S) to create a timespan
+        $outputDuration=$($i[3] -split ':')
+        $PSStartDate = Get-Date $($($i[0]) + ' ' + $($i[1]))
+        $PSTimeSpan = New-TimeSpan -Hours $($outputDuration[0]) -Minutes $($outputDuration[1]) -Seconds $($outputDuration[2])
+        $PSEndDate = $PSStartDate.AddSeconds($PSTimespan.TotalSeconds)
+        #Create an object holding the current loops properties. These will be placed in the previously defined array to return
+        $output =  New-Object -TypeName psobject -Property @{
+            'PSStartDate' = $PSStartDate
+            'PSTimespan' = $PSTimeSpan
+            'PSEndDate' = $PSEndDate
+        }
+        #Append the current loop to a master object for return
+        $ReturnObject += $output
+    }
+#Return the results
+return $ReturnObject
+}
