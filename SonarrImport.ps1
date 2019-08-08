@@ -2,14 +2,18 @@
 #Protocol used to access Sonarr. [http|https]
 $WebProtocol = 'http'
 #Sonarr API key for authentication. Found under Settings-> General-> API.
-$ApiKey = '00dfd2f8a4564a77bf0e4e6c280526df'
+$ApiKey = '02bfd2f8aaf3awd477bf0e4e6c286721df'
 #Sonarr IP or hostname. This is used to access the Sonarr API                                                                                                                                                                                            
 $SonarrHost = 'butler'
 #Sonarr port. Default is 8989
 $Port = '8989'
 #Would you like to receive notifications in the webUI when a file is imported? [$true|$false]
 $ClientNotifications = $true
-#Types of media to import. Seperate with '|'                                                                                                                                                                                                 
+#Action Sonarr takes when it is notified about the files. [move|copy|auto]
+$SonarrAction = 'move'
+#Maximum items to be actioned each time the script is run.
+[int]$MaxitemCount = 50
+#Types of media to import. Seperate with '|'                                                                                                                                                                                            
 $ExtensionRegex = '.mp4|.mkv|.wmv|.avi'
 #Path to media for import on the machine running the script. Use full path; i.e. '/mnt/...'
 $MediaDirectoryRelativeToScript = '/mnt/butler/media/tmp/'
@@ -20,9 +24,11 @@ $MediaDirectoryRelativeToSonarr = '/downloads/'
 <#End of User Defined Variables#>
 
 #Get media to be imported
-$Media = Get-ChildItem -File -Path $MediaDirectoryRelativeToScript | Where-Object {$_.extension -match $ExtensionRegex}
+$Media = Get-ChildItem -Recurse -File -Path $MediaDirectoryRelativeToScript | Where-Object {$_.extension -match $ExtensionRegex}
+#Limit the amount of files imported
+$Media | Select-Object -First $MaxitemCount
 #Add path relative to sonarr variable
-$Media = $Media | Select-Object *,@{Name='SonarrPath';Expression={$MediaDirectoryRelativeToSonarr + $_.PSChildName}}
+$Media = $Media | Select-Object *,@{Name='SonarrPath';Expression={$_.fullname -replace($MediaDirectoryRelativeToScript,$MediaDirectoryRelativeToSonarr)}}
 #Forming the connection string to access Sonarr
 $URL = $WebProtocol + '://' + $SonarrHost + ':' + $Port + '/api/command?apikey=' + $ApiKey
 
@@ -40,7 +46,7 @@ foreach($i in $Media.SonarrPath){
         #Path to media relative to sonarr
         'path'=$i; 
         #What to do with the files. [move|copy|auto]
-        'importmode'='move'
+        'importmode'=$SonarrAction
     }|ConvertTo-Json
     
     Invoke-RestMethod -Uri $URL -Method Post -Body $JSON
