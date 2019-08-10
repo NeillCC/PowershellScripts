@@ -14,7 +14,7 @@ $SonarrAction = 'move'
 #Maximum items to be actioned each time the script is run.
 [int]$MaxitemCount = 50
 #Types of media to import. Seperate with '|'                                                                                                                                                                                            
-$ExtensionRegex = '.mp4|.mkv|.wmv|.avi'
+$ExtensionRegex = '.mp4|.mkv|.wmv|.avi|.srt'
 #Path to media for import on the machine running the script. Use full path; i.e. '/mnt/...'
 $MediaDirectoryRelativeToScript = '/mnt/butler/media/tmp/'
 #Path to media from Sonarr's perspective. if running in a docker, this may be '/downloads'. If this is running on the same machine as sonarr they can be the same path
