@@ -1,30 +1,49 @@
 ##This scripts needs Powershell 6 AKA Powershell Core due to the flags required in Invoke-RestMethod. -SSLProtocal wasn't added until 6.0
-#LogPath needs a trailing backslash
-$LogPath = 'c:\logs\'
+#This script will update an existing cloudflare zone with your current ip address. It will not create a new zone.
+
+<#Begin user defined variables#>
+#LogDir needs a trailing backslash
+$LogDir = 'c:\logs\'
+#The zone id of the domain you wish to update
+[string]$ZoneID = 'REDACTED'
+#The recordID of the subdomain you wish to update
+[string]$RecordID = 'REDACTED'
+#This should not need to be changed. Documentation can be found at https://api.cloudflare.com/#dns-records-for-a-zone-update-dns-record
+[string]$URI = "https://api.cloudflare.com/client/v4/zones/$ZoneID/dns_records/$RecordID"
+#The Fully quallified domain name you wish to update.
+[string]$FQDN = 'example.domain.tld'
+#The email address associated with the the auth key you provide
+[string]$Email = 'yourCloudflareEmail@domain.tld'
+#Authkeys can be found /created at https://dash.cloudflare.com/profile/api-tokens
+[string]$AuthKey = 'LQT8_k69YKhOib_-3WOu_ccpDrrfn7TScc5p3jTj'
+#The TTL for your record. This can be left as is
+[int]$TTL = 120
+<#End user defined variables#>
+
 #Create the log path if it doesn't exist
-if(!(test-path $LogPath)){New-Item -Path $LogPath -ItemType Directory -Force}
+if(!(test-path $LogDir)){New-Item -Path $LogDir -ItemType Directory -Force}
+#Create date variable for use in logging
+$DateTime = get-date -Format 'yyyy-MM-dd HH-mm'
+#Compile logfile path from variables
+$LogPath = $LogDir + $DateTime + '-CloudlfareUpdate.txt'
+#Start logging with output file of $LogPath
+Start-Transcript -Path "$LogPath"
 #Remove logs older than one month
 Get-ChildItem $LogPath -filter {creationtime -gt (Get-Date).AddMonths(1)} | Remove-Item -Force
-#Start logging
-Start-Transcript -Path "$LogPath$(get-date -Format 'yyyy-MM-dd HH-mm').txt" -Append
-##Declare your variables
-[string]$ZoneID = 'REDACTED'
-[string]$RecordID = 'REDACTED'
-[string]$URI = "https://api.cloudflare.com/client/v4/zones/$ZoneID/dns_records/$RecordID"
-[string]$FQDN = 'example.domain.tld'
+##Build the hashtable sent to the API
 [hashtable] $Headers = @{
-    'X-Auth-Email'='yourCloudflareEmail@domain.tld'
-    'X-Auth-Key'='REDACTED'
+    'X-Auth-Email'=$Email
+    'X-Auth-Key'=$AuthKey
 }
 #Get current ip
 $IP = Invoke-WebRequest -Uri 'https://api.ipify.org' | Select-Object -ExpandProperty content
-#form body of REST Request
+#Form body of REST Request
 $Body = @{
     'type'='A';
     'content'=$ip;
     'name'=$FQDN;
     'proxied'=$false;
-    'ttl'='120';
+    'ttl'=$TTL;
 } | ConvertTo-Json
 #Perform REST request
 Invoke-RestMethod -SslProtocol Tls12 -Uri $URI -Method Put -Headers $Headers -Body $Body
