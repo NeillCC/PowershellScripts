@@ -14,7 +14,7 @@ function Get-CloudflareZone {
         'X-Auth-Key'=$AuthKey
     }
     #Perform Call
-    $API = Invoke-WebRequest -Headers $Headers -Method Get -Uri "https://api.cloudflare.com/client/v4/zones?name=$TLD&match=all" | Select-Object -ExpandProperty content
+    $API = Invoke-WebRequest -Headers $Headers -Method Get -Uri "https://api.cloudflare.com/client/v4/zones?name=$TLD&match=all"
 
     #Create a hastable to make the response more readable
     $result = [Ordered]@{
