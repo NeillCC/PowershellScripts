@@ -1,5 +1,4 @@
 ##Uses the cloudflare api to pull your domain zone
-#This has only been tested on accounts witha  single domain.
 #Read the full documentation here: https://api.cloudflare.com/#zone-list-zones
 
 function Get-CloudflareZone {
