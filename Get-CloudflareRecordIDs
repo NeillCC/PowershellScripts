@@ -1,27 +1,28 @@
-##Uses the cloudflare api to pull your domain zone
-#Read the full documentation for retrieving zone ids here: https://api.cloudflare.com/#zone-list-zones
-#Read the full documentation for retrieving record ids here: https://api.cloudflare.com/#dns-records-for-a-zone-list-dns-records
+##Uses the cloudflare api to pull all RecordIDs you are allowed to see
+#you can find your API Key at https://dash.cloudflare.com/profile/api-tokens
 
 function Get-CloudflareDNSRecordIDs {
     param(
         [Parameter(Mandatory=0,Position=0)] [string] $EmailAddress,
-        [Parameter(Mandatory=0,Position=1)] [string] $AuthKey
+        [Parameter(Mandatory=0,Position=1)] [string] $APIKey
 
     )
     #Use provided paramters for authentication
     [hashtable] $Headers = @{
-        'X-Auth-Email'=$EmailAddress
-        'X-Auth-Key'=$AuthKey
+        'X-Auth-Email' = $EmailAddress
+        'X-Auth-Key' = $APIKey
     }
 
+    #Perform API call to get all TLDs the account is allowed to see
     $TLDApi = Invoke-WebRequest -Headers $Headers -Method Get -Uri "https://api.cloudflare.com/client/v4/zones?&match=all"
 
-    #Create new Variable to append responses to
+    #Create new variable to which we can append responses
     $Result = @()
 
+    #Loop through each response
     foreach($f in ($TLDApi.content|ConvertFrom-Json).Result){
 
-        #Perform Call
+        #Perform API call using zoneid from previous api request
         $ZoneApi = Invoke-WebRequest -Headers $Headers -Method Get -Uri "https://api.cloudflare.com/client/v4/zones/$($f.id)/dns_records?match=all"
 
         #Loop through each response
@@ -39,6 +40,7 @@ function Get-CloudflareDNSRecordIDs {
             $Result += $LoopVariable
         }
     }
+    #Sort results by domain for easier reading
     $Result = $Result | Sort-Object zonename -Descending
     return $Result
 }
