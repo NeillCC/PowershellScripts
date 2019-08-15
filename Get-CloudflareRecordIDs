@@ -32,6 +32,9 @@ function Get-CloudflareDNSRecordIDs {
                 FQDN = $i.name
                 ZoneID = $i.Zone_ID
                 ZoneName = $i.Zone_Name
+                RecordType = $i.type
+                UsingCloudflareProxy = $i.proxied
+                FullJSONResponse = $i
             }
             $Result += $LoopVariable
         }
