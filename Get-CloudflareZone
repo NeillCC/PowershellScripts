@@ -1,0 +1,27 @@
+##Uses the cloudflare api to pull your domain zone
+#This has only been tested on accounts witha  single domain.
+#Read the full documentation here: https://api.cloudflare.com/#zone-list-zones
+
+function Get-CloudflareZone {
+    param(
+        [Parameter(Mandatory=0,Position=0)] [string] $EmailAddress,
+        [Parameter(Mandatory=0,Position=1)] [string] $AuthKey,
+        [Parameter(Mandatory=0,Position=2)] [string] $TLD
+    )
+    #Use provided paramters for authentication
+    [hashtable] $Headers = @{
+        'X-Auth-Email'=$EmailAddress
+        'X-Auth-Key'=$AuthKey
+    }
+    #Perform Call
+    $API = Invoke-WebRequest -Headers $Headers -Method Get -Uri "https://api.cloudflare.com/client/v4/zones?name=$TLD&match=all" | Select-Object -ExpandProperty content
+
+    #Create a hastable to make the response more readable
+    $result = [Ordered]@{
+    DomainName = ($API.content|ConvertFrom-Json).result.name
+    Zone = ($API.content|ConvertFrom-Json).result.id
+    FullResponseString = $API
+    }
+
+    return $Result
+}
