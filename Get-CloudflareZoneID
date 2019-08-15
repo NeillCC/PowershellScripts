@@ -1,7 +1,7 @@
 ##Uses the cloudflare api to pull your domain zone
 #Read the full documentation here: https://api.cloudflare.com/#zone-list-zones
 
-function Get-CloudflareZoneID {
+function Get-CloudflareZone {
     param(
         [Parameter(Mandatory=0,Position=0)] [string] $EmailAddress,
         [Parameter(Mandatory=0,Position=1)] [string] $AuthKey,
@@ -19,7 +19,8 @@ function Get-CloudflareZoneID {
     $result = [Ordered]@{
     DomainName = ($API.content|ConvertFrom-Json).result.name
     Zone = ($API.content|ConvertFrom-Json).result.id
-    FullResponseString = $API
+    StringResponse = $API.content
+    JSONResponse = $API.content|ConvertFrom-Json
     }
 
     return $Result
