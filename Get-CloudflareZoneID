@@ -21,6 +21,9 @@ function Get-CloudflareZone {
     ZoneID = ($API.content|ConvertFrom-Json).result.id
     StringResponse = $API.content
     JSONResponse = $API.content|ConvertFrom-Json
+    AuthKey = $AuthKey
+    EmailAddress = $EmailAddress
+    TLD = $TLD
     }
 
     return $Result
