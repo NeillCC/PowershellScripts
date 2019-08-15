@@ -18,7 +18,7 @@ function Get-CloudflareZone {
     #Create a hastable to make the response more readable
     $result = [Ordered]@{
     DomainName = ($API.content|ConvertFrom-Json).result.name
-    Zone = ($API.content|ConvertFrom-Json).result.id
+    ZoneID = ($API.content|ConvertFrom-Json).result.id
     StringResponse = $API.content
     JSONResponse = $API.content|ConvertFrom-Json
     }
