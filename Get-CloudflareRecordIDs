@@ -1,0 +1,41 @@
+##Uses the cloudflare api to pull your domain zone
+#Read the full documentation for retrieving zone ids here: https://api.cloudflare.com/#zone-list-zones
+#Read the full documentation for retrieving record ids here: https://api.cloudflare.com/#dns-records-for-a-zone-list-dns-records
+
+function Get-CloudflareDNSRecordIDs {
+    param(
+        [Parameter(Mandatory=0,Position=0)] [string] $EmailAddress,
+        [Parameter(Mandatory=0,Position=1)] [string] $AuthKey
+
+    )
+    #Use provided paramters for authentication
+    [hashtable] $Headers = @{
+        'X-Auth-Email'=$EmailAddress
+        'X-Auth-Key'=$AuthKey
+    }
+
+    $TLDApi = Invoke-WebRequest -Headers $Headers -Method Get -Uri "https://api.cloudflare.com/client/v4/zones?&match=all"
+
+    #Create new Variable to append responses to
+    $Result = @()
+
+    foreach($f in ($TLDApi.content|ConvertFrom-Json).Result){
+
+        #Perform Call
+        $ZoneApi = Invoke-WebRequest -Headers $Headers -Method Get -Uri "https://api.cloudflare.com/client/v4/zones/$($f.id)/dns_records?match=all"
+
+        #Loop through each response
+        foreach($i in ($ZoneAPI.content|ConvertFrom-Json).Result){
+            #Create a hastable to make the response more readable
+            $LoopVariable = New-Object -TypeName psobject -Property @{
+                RecordID = $i.id
+                FQDN = $i.name
+                ZoneID = $i.Zone_ID
+                ZoneName = $i.Zone_Name
+            }
+            $Result += $LoopVariable
+        }
+    }
+    $Result = $Result | Sort-Object zonename -Descending
+    return $Result
+}
