@@ -105,16 +105,19 @@ function Format-ArtistFolderByAlbum {
     [CmdletBinding()]
     param ([Parameter()] [string] $Path = ".") #Defaults to Present Working Directory
      if (!(Test-Path $Path)) {throw "Path does not exist..."}
+    $Path = get-item $Path | Select-Object -ExpandProperty FullName
+    Set-Location $Path
     $allFiles = Get-ChildItem $Path
-    $metadata = $allFiles|Get-FileMetaData
+    $metadata = $allFiles|Get-FileMetaData -Verbose
     #Create a folder for each Album
     foreach($i in $metadata) {
-        $Album = $i.Album
-        $Track = $i.Name
-        $Track = $Track.Split([IO.Path]::GetInvalidFileNameChars()) -join '_'
-        $Album = $Album.Split([IO.Path]::GetInvalidFileNameChars()) -join '_'
-        if(!(Test-Path $Album)){New-Item -ItemType Directory -Name $Album -Verbose}
+        $TrackValidName = $i.name.Split([IO.Path]::GetInvalidFileNameChars()) -join '_'
+        $AlbumValidName = $i.Album.Split([IO.Path]::GetInvalidFileNameChars()) -join '_'
+        $AlbumValidPath = Join-Path $Path $AlbumValidName       
+        if(!(Test-Path $AlbumValidPath)){New-Item -ItemType Directory -Path $AlbumValidPath -Force -Verbose}
         #Move files to new folders
-        Move-Item $i.name "$Album\$Track"
+        $sourcePath = Join-Path $Path $i.name
+        $destPath = Join-Path $AlbumValidPath $TrackValidName
+        Move-Item $sourcePath $destPath -Verbose
     }
 }
