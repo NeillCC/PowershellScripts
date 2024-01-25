@@ -106,7 +106,6 @@ function Format-ArtistFolderByAlbum {
     param ([Parameter()] [string] $Path = ".") #Defaults to Present Working Directory
      if (!(Test-Path $Path)) {throw "Path does not exist..."}
     $Path = get-item $Path | Select-Object -ExpandProperty FullName
-    Set-Location $Path
     $allFiles = Get-ChildItem $Path
     $metadata = $allFiles|Get-FileMetaData -Verbose
     #Create a folder for each Album
